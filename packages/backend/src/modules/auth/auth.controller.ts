@@ -209,7 +209,11 @@ export class AuthController {
 
     const redirectUrl = new URL(uri, `${proto}://${host}`);
 
-    const loginUrl = new URL('/login', `${proto}://${rootDomain}`);
+    const localDomain = this.config.get('userSettings').localDomain;
+    const publicDomain = this.config.get('userSettings').domain;
+
+    const loginDomain = rootDomain === localDomain ? rootDomain : publicDomain;
+    const loginUrl = new URL('/login', `${proto}://${loginDomain}`);
     loginUrl.searchParams.set('redirect_url', redirectUrl.toString());
     loginUrl.searchParams.set('app', app);
 
