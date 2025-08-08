@@ -25,7 +25,7 @@ const isSafeRedirect = (url: string, app?: string) => {
     const queryKey = getAppQueryKey({ path: { urn: app } });
     const data = queryClient.getQueryData(queryKey) as GetAppDto;
 
-    if (data?.app?.domain === parsedUrl.host || data?.app?.localSubdomain === parsedUrl.host) {
+    if (data?.app?.domain?.endsWith(`.${window.location.host}`)) {
       return true;
     }
   }
