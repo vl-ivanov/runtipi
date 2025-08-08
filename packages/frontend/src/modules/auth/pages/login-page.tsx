@@ -9,9 +9,29 @@ import { useTranslation } from 'react-i18next';
 import { Navigate, redirect, useNavigate, useSearchParams } from 'react-router';
 import { LoginForm } from '../components/login-form';
 import { TotpForm } from '../components/totp-form/totp-form';
+import type { GetAppDto } from '@/api-client';
+import { getAppQueryKey } from '@/api-client/@tanstack/react-query.gen';
+import { useQueryClient } from '@tanstack/react-query';
 
 const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
-const isSafeRedirect = (url: string) => new URL(url).host.endsWith(`.${window.location.host}`);
+const isSafeRedirect = (url: string, app?: string) => {
+  const parsedUrl = new URL(url);
+  if (parsedUrl.host.endsWith(`.${window.location.host}`)) {
+    return true;
+  }
+
+  if (app) {
+    const queryClient = useQueryClient();
+    const queryKey = getAppQueryKey({ path: { urn: app } });
+    const data = queryClient.getQueryData(queryKey) as GetAppDto;
+
+    if (data?.app?.domain === parsedUrl.host || data?.app?.localSubdomain === parsedUrl.host) {
+      return true;
+    }
+  }
+
+  return false;
+};
 
 export async function clientLoader() {
   const user = await userContext();
@@ -47,7 +67,7 @@ export default () => {
         setUserContext({ isLoggedIn: true });
         refreshUserContext();
 
-        if (redirect_url && isSafeRedirect(redirect_url)) {
+        if (redirect_url && isSafeRedirect(redirect_url, app)) {
           window.location.href = redirect_url;
           return;
         }
